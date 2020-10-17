@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
-const { mongo } = mongoose;
+
 const transaksiSchema = mongoose.Schema({
-        namaTransaksi: {
+        detailtransaksi: {
             type: String,
             required: true,
         },

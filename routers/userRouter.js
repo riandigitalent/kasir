@@ -11,8 +11,12 @@ userRouter.post('/add', async(req, res) => {
     try {
         const {
             username,
-            password
+            password,
+            role,
+            accessToken
         } = req.body;
+
+        console.log(username)
 
         const users = await User.find({ username: username })
             //
@@ -21,7 +25,9 @@ userRouter.post('/add', async(req, res) => {
 
         const newUser = new User({
             "username": username,
-            "password": hashedPW
+            "password": hashedPW,
+            "role": role,
+            "accessToken": accessToken
         })
 
         const createdUser = await newUser.save();
@@ -38,7 +44,7 @@ userRouter.post('/login', async(req, res) => {
 
         const {
             username,
-            password
+            password,
         } = req.body;
 
         const currentUser = await new Promise((resolve, reject) => {
@@ -93,16 +99,20 @@ userRouter.get('/info/:id', async(req, res) => {
 userRouter.put('/update/:id', async(req, res) => {
     const {
         username,
-        password
+        password,
+        role,
+        accessToken
     } = req.body
 
     let saltRound = 10
     const hashedPW = await bcrypt.hash(password, saltRound);
 
-    const user = await User.findById(req.params.id)
-    if (user) {
-        user.username = username
-        user.password = hashedPW
+    const users = await User.findById(req.params.id)
+    if (users) {
+        users.username = username
+        users.password = hashedPW
+        users.role = role,
+            users.accessToken = accessToken
 
         const updateUser = await user.save()
         res.json(updateUser)

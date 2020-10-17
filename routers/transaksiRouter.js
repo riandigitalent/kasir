@@ -1,21 +1,22 @@
 import express from 'express'
 import Transaksi from '../models/transaksiModel.js'
 
-const router = express.Router()
+const transRouter = express.Router();
 
-export default router
 
-router.post('/Transaksi', async(req, res) => {
+
+transRouter.post('/baru', async(req, res) => {
     try {
         const {
-            namaTransaksi,
+            detailtransaksi,
             konsumen,
             jumlah,
             harga,
             iduser
         } = req.body
+        console.log(detailtransaksi)
         const transaksi = new Transaksi({
-            namaTransaksi,
+            detailtransaksi,
             konsumen,
             jumlah,
             harga,
@@ -29,7 +30,7 @@ router.post('/Transaksi', async(req, res) => {
     }
 })
 
-router.get('/Transaksi', async(req, res) => {
+transRouter.get('/List', async(req, res) => {
     const transaksi = await Transaksi.find({})
     if (transaksi) {
         res.json(transaksi)
@@ -38,7 +39,7 @@ router.get('/Transaksi', async(req, res) => {
     }
 })
 
-router.get('/Transaksi/:id', async(req, res) => {
+transRouter.get('/check/:id', async(req, res) => {
     const transaksi = await Transaksi.findById(req.params.id)
     if (transaksi) {
         res.json(transaksi)
@@ -48,9 +49,9 @@ router.get('/Transaksi/:id', async(req, res) => {
     }
 })
 
-router.put('/Transaksi/:id', async(req, res) => {
+transRouter.put('/Koreksi/:id', async(req, res) => {
     const {
-        namaTransaksi,
+        detailtransaksi,
         konsumen,
         jumlah,
         harga,
@@ -59,8 +60,9 @@ router.put('/Transaksi/:id', async(req, res) => {
 
     const transaksi = await Transaksi.findById(req.params.id)
     if (transaksi) {
-        transaksi.namaTransaksi = namaTransaksi
+        transaksi.detailtransaksi = detailtransaksi
         transaksi.konsumen = konsumen
+        transaksi.jumlah = jumlah
         transaksi.harga = harga
         transaksi.iduser = iduser
 
@@ -74,7 +76,7 @@ router.put('/Transaksi/:id', async(req, res) => {
 })
 
 
-router.delete('/Transaksi/:id', async(req, res) => {
+transRouter.delete('/Hapus/:id', async(req, res) => {
         const transaksi = await Transaksi.findById(req.params.id)
         if (transaksi) {
             await transaksi.remove()
@@ -86,7 +88,7 @@ router.delete('/Transaksi/:id', async(req, res) => {
 
     })
     //del all
-router.delete('/Transaksi', async(req, res) => {
+transRouter.delete('/hapussemua', async(req, res) => {
     const transaksi = await Transaksi.find()
     if (transaksi) {
         await transaksi.remove({})
@@ -97,3 +99,5 @@ router.delete('/Transaksi', async(req, res) => {
     }
 
 })
+
+export default transRouter
