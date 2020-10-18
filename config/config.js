@@ -1,3 +1,5 @@
-module.exports = {
-    'secret': 'supersecret'
-};
+const Conf = {
+    secret: "secret"
+}
+
+export default Conf;

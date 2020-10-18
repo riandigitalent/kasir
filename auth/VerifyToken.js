@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken'; // used to create, sign, and verify tokens
-const config = ('../config/config.js'); // get our config file
+import Conf from '../config/config.js';
 
 
 
@@ -11,7 +11,7 @@ function verifyToken(req, res, next) {
         return res.status(403).send({ auth: false, message: 'No token provided.' });
 
     // verifies secret and checks exp
-    jwt.verify(token, config.secret, function(err, decoded) {
+    jwt.verify(token, Conf.secret, function(err, decoded) {
         if (err)
             return res.status(500).send({ auth: false, message: 'Failed to authenticate token.' });
 

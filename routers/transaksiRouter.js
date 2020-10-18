@@ -1,12 +1,16 @@
 import express from 'express'
 import Transaksi from '../models/transaksiModel.js'
+import Conf from '../config/config.js';
 
 const transRouter = express.Router();
 
 
 
 transRouter.post('/baru', async(req, res) => {
+
     try {
+
+
         const {
             detailtransaksi,
             konsumen,
@@ -99,5 +103,76 @@ transRouter.delete('/hapussemua', async(req, res) => {
     }
 
 })
+
+
+transRouter.post('/Melihat_Saldo_Total', function(req, res) {
+    //header apabila akan melakukan akses
+    var token = req.headers['x-access-token'];
+    if (!token) return res.status(401).send({ auth: false, message: 'No token provided.' });
+
+    //verifikasi jwt
+    jwt.verify(token, Conf.secret, function(err, decoded) {
+        if (err) return res.status(500).send({ auth: false, message: 'Failed to authenticate token.' });
+        const jabatan = decoded.user.jabatan;
+        if (jabatan === 'kasir') {
+
+            Kasir.create({
+                "jenis_transaksi": `${decoded.user.nama_belakang} Melihat Saldo total Status Tidak Memiliki wewenang`
+
+            }, function(err, user) {
+                if (err) return res.status(500).send("There was a problem transaksi.")
+            });
+
+
+            res.status(200).send(`${decoded.user.nama_belakang} Tidak Memiliki Wewenang`);
+        } else {
+
+            Kasir.create({
+                "jenis_transaksi": `${decoded.user.nama_belakang} Melihat Saldo Total Status Bisa Melakukan`
+
+            }, function(err, user) {
+                if (err) return res.status(500).send("There was a problem transaksi.")
+            });
+
+            res.status(200).send(`${decoded.user.nama_belakang} Bisa Melakukan`);
+        }
+    });
+});
+
+
+transRouter.post('/Mengambil_Uang', function(req, res) {
+    //header apabila akan melakukan akses
+    var token = req.headers['x-access-token'];
+    if (!token) return res.status(401).send({ auth: false, message: 'No token provided.' });
+
+    //verifikasi jwt
+    jwt.verify(token, Conf.secret, function(err, decoded) {
+        if (err) return res.status(500).send({ auth: false, message: 'Failed to authenticate token.' });
+        const jabatan = decoded.user.jabatan;
+        console.log(decoded);
+        if (jabatan === 'kasir' || jabatan === 'manager') {
+
+            Kasir.create({
+                "jenis_transaksi": `${decoded.user.nama_belakang} Mengambil Uang Status Tidak Memiliki Wewenang`
+
+            }, function(err, user) {
+                if (err) return res.status(500).send("There was a problem transaksi.")
+            });
+
+            res.status(200).send(`${decoded.user.nama_belakang} Tidak Memiliki Wewenang`);
+        } else {
+
+            Kasir.create({
+                "jenis_transaksi": `${decoded.user.nama_belakang} Mengambil Uang Status Bisa Melakukan`
+
+            }, function(err, user) {
+                if (err) return res.status(500).send("There was a problem transaksi.")
+            });
+            res.status(200).send(`${decoded.user.nama_belakang} Bisa Melakukan`);
+        }
+    });
+});
+
+
 
 export default transRouter

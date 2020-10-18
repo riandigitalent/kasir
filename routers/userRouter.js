@@ -4,88 +4,61 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import VerifyToken from '../auth/VerifyToken.js'
 import bodyParser from 'body-parser'
+import dotenv from 'dotenv';
+dotenv.config();
+
+
 
 const userRouter = express.Router();
 
-//userRouter.use(bodyParser.urlencoded({ extended: false }));
-//userRouter.use(bodyParser.json());
+userRouter.use(bodyParser.urlencoded({ extended: false }));
+userRouter.use(bodyParser.json());
 
 // tambah user
 userRouter.post('/add', async(req, res) => {
-    try {
-        const {
-            username,
-            password,
-            role
-        } = req.body;
+    const data = req.body;
+    var hashedPassword = bcrypt.hashSync(data.password, 12);
+    User.create({
+            username: data.username,
+            password: hashedPassword,
+            role: data.role
+        },
+        function(err, user) {
+            if (err) return res.status(500).send("There was a problem registering the user.")
 
-        console.log(username, password, role)
+            // create a token
+            const token = jwt.sign({ id: user._id }, process.env.SECRET, { expiresIn: '86400s' });
+            res.status(200).send({ auth: true, token: token } + user);
+        });
+    /// res.status(200).send({ auth: true, token: token });
 
-        const users = await User.find({ username: username })
-            //
-        let saltRound = 10
-        const hashedPW = await bcrypt.hash(password, saltRound);
-
-        const newUser = new User({
-            "username": username,
-            "password": hashedPW,
-            "role": role
-        })
-
-        const createdUser = await newUser.save();
-
-        //var token = jwt.sign({ id: user._id }, config.secret, {
-        //    expiresIn: 86400 // expires in 24 hours
-        //  });
-
-        res.status(200).send({ auth: true, token: token });
-    } catch (error) {
-        res.status(500).json({ error: error })
-    }
 })
+
 
 //login
 userRouter.post('/login', async(req, res) => {
-    try {
+    User.findOne({ username: req.body.username }, function(err, user) {
+        if (err) return res.status(500).send('Error on the server.');
+        if (!user) return res.status(404).send('No user found.');
 
-        const {
-            username,
-            password,
-        } = req.body;
+        // check if the password is valid
+        var passwordIsValid = bcrypt.compareSync(req.body.password, user.password);
+        if (!passwordIsValid) return res.status(401).send({ auth: false, token: null });
 
-        const currentUser = await new Promise((resolve, reject) => {
-            User.find({ "username": username }, function(err, user) {
-                if (err)
-                    reject(err)
-                resolve(user)
-            })
-        })
+        // if user is found and password is valid
+        // create a token
+        var token = jwt.sign({ id: user._id }, process.env.SECRET, {
+            expiresIn: 86400 // expires in 24 hours
+        });
 
-        //cek apakah ada user?
-        if (currentUser[0]) {
-            //check password
-            bcrypt.compare(password, currentUser[0].password).then(function(result) {
-                if (result) {
-                    var token = jwt.sign({ id: user._id }, config.secret, {
-                        expiresIn: 86400 // expires in 24 hours
-                    });
+        // return the information including token as JSON
+        res.status(200).send({ auth: true, token: token });
+    });
 
-                    // return the information including token as JSON
-                    res.status(202).send({ auth: true, token: token });
-                } else
-                    res.status(201).json({ "status": "wrong password." });
-            });
-        } else {
-            res.status(201).json({ "status": "username not found" });
-        }
-
-    } catch (error) {
-        res.status(500).json({ error: error })
-    }
-})
+});
 
 //getalluser
-userRouter.get('/all', VerifyToken, async(req, res) => {
+userRouter.get('/all', async(req, res) => {
     const users = User.find({})
     if (users) {
         res.json(users)
@@ -95,7 +68,7 @@ userRouter.get('/all', VerifyToken, async(req, res) => {
 })
 
 //getuser by id
-userRouter.get('/info/:id', VerifyToken, async(req, res) => {
+userRouter.get('/info/:id', async(req, res) => {
     const users = await User.findById(req.params.id)
     if (users) {
         res.json(users)
@@ -106,7 +79,7 @@ userRouter.get('/info/:id', VerifyToken, async(req, res) => {
 
 //put update
 
-userRouter.put('/update/:id', VerifyToken, async(req, res) => {
+userRouter.put('/update/:id', async(req, res) => {
     const {
         username,
         password,
@@ -131,7 +104,7 @@ userRouter.put('/update/:id', VerifyToken, async(req, res) => {
 
 })
 
-userRouter.delete('/del/:id', VerifyToken, async(req, res) => {
+userRouter.delete('/del/:id', async(req, res) => {
     const users = await User.findById(req.params.id)
     if (users) {
         await User.remove()
@@ -142,5 +115,15 @@ userRouter.delete('/del/:id', VerifyToken, async(req, res) => {
 })
 
 
+userRouter.get('/check', async(req, res) => {
+    var token = req.headers['x-access-token'];
+    if (!token) return res.status(401).send({ auth: false, message: 'No token provided.' });
+
+    jwt.verify(token, process.env.SECRET, function(err, decoded) {
+        if (err) return res.status(500).send({ auth: false, message: 'Failed to authenticate token.' });
+
+        res.status(200).send(decoded);
+    });
+});
 
 export default userRouter;
