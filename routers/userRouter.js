@@ -14,6 +14,7 @@ const userRouter = express.Router();
 userRouter.use(bodyParser.urlencoded({ extended: false }));
 userRouter.use(bodyParser.json());
 
+
 // tambah user
 userRouter.post('/add', async(req, res) => {
     const data = req.body;
@@ -27,7 +28,7 @@ userRouter.post('/add', async(req, res) => {
             if (err) return res.status(500).send("There was a problem registering the user.")
 
             // create a token
-            const token = jwt.sign({ id: user._id }, process.env.SECRET, { expiresIn: '86400s' });
+            const token = jwt.sign({ user }, process.env.SECRET, { expiresIn: '86400s' });
             res.status(200).send({ auth: true, token: token } + user);
         });
     /// res.status(200).send({ auth: true, token: token });
@@ -47,7 +48,7 @@ userRouter.post('/login', async(req, res) => {
 
         // if user is found and password is valid
         // create a token
-        var token = jwt.sign({ id: user._id }, process.env.SECRET, {
+        var token = jwt.sign({ user }, process.env.SECRET, {
             expiresIn: 86400 // expires in 24 hours
         });
 

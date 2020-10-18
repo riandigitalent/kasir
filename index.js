@@ -28,7 +28,8 @@ app.get('/', (req, res, next) => {
     //middleware
 app.use(morgan('dev'))
 app.use(express.json())
-    //add fitur
+
+//add fitur
 app.use('/trans', transRouter)
 app.use('/user', userRouter)
 
