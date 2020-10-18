@@ -14,10 +14,11 @@ const userSchema = mongoose.Schema({
         type: String,
         default: 'kasir',
         enum: ["kasir", "manager", "bos"]
-    },
-    accessToken: {
-        type: String
     }
+    /**
+     * ,accessToken: {type: String}
+     * 
+     */
 }, {
     timestamps: true,
 });

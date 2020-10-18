@@ -1,11 +1,12 @@
 import express from 'express'
 import Transaksi from '../models/transaksiModel.js'
+import auth2 from('../middlewares/auth')
 
 const transRouter = express.Router();
 
 
 
-transRouter.post('/baru', async(req, res) => {
+transRouter.post('/baru', auth2.verifyToken, async(req, res) => {
     try {
         const {
             detailtransaksi,

@@ -1,9 +1,13 @@
 import User from '../models/UserModel.js';
 import express from 'express'
 import bcrypt from 'bcrypt'
-//import jwt from 'jsonwebtoken'
+import jwt from 'jsonwebtoken'
+import config from '../config/config.js'
+import bodyParser from 'body-parser';
 
 const userRouter = express.Router();
+userRouter.use(bodyParser.urlencoded({ extended: false }));
+userRouter.use(bodyParser.json());
 
 
 // tambah user
@@ -12,8 +16,8 @@ userRouter.post('/add', async(req, res) => {
         const {
             username,
             password,
-            role,
-            accessToken
+            role
+            //,accessToken
         } = req.body;
 
         console.log(username)
@@ -26,13 +30,17 @@ userRouter.post('/add', async(req, res) => {
         const newUser = new User({
             "username": username,
             "password": hashedPW,
-            "role": role,
-            "accessToken": accessToken
+            "role": role
+                //,"accessToken": accessToken
         })
 
         const createdUser = await newUser.save();
-
-        res.status(201).json(createdUser)
+        // create a token
+        var token = jwt.sign({ id: newUser._id }, config.secret, {
+            expiresIn: 86400 // expires in 24 hours
+        });
+        res.status(200).send({ auth: true, token: token });
+        //
     } catch (error) {
         res.status(500).json({ error: error })
     }
@@ -41,7 +49,6 @@ userRouter.post('/add', async(req, res) => {
 //login
 userRouter.post('/login', async(req, res) => {
     try {
-
         const {
             username,
             password,
@@ -100,8 +107,8 @@ userRouter.put('/update/:id', async(req, res) => {
     const {
         username,
         password,
-        role,
-        accessToken
+        role
+        //,accessToken
     } = req.body
 
     let saltRound = 10
@@ -111,8 +118,8 @@ userRouter.put('/update/:id', async(req, res) => {
     if (users) {
         users.username = username
         users.password = hashedPW
-        users.role = role,
-            users.accessToken = accessToken
+        users.role = role
+            //   ,users.accessToken = accessToken
 
         const updateUser = await user.save()
         res.json(updateUser)
