@@ -1,10 +1,14 @@
 import User from '../models/UserModel.js';
 import express from 'express'
 import bcrypt from 'bcrypt'
-//import jwt from 'jsonwebtoken'
+import jwt from 'jsonwebtoken'
+import VerifyToken from '../auth/VerifyToken.js'
+import bodyParser from 'body-parser'
 
 const userRouter = express.Router();
 
+//userRouter.use(bodyParser.urlencoded({ extended: false }));
+//userRouter.use(bodyParser.json());
 
 // tambah user
 userRouter.post('/add', async(req, res) => {
@@ -12,11 +16,10 @@ userRouter.post('/add', async(req, res) => {
         const {
             username,
             password,
-            role,
-            accessToken
+            role
         } = req.body;
 
-        console.log(username)
+        console.log(username, password, role)
 
         const users = await User.find({ username: username })
             //
@@ -26,13 +29,16 @@ userRouter.post('/add', async(req, res) => {
         const newUser = new User({
             "username": username,
             "password": hashedPW,
-            "role": role,
-            "accessToken": accessToken
+            "role": role
         })
 
         const createdUser = await newUser.save();
 
-        res.status(201).json(createdUser)
+        //var token = jwt.sign({ id: user._id }, config.secret, {
+        //    expiresIn: 86400 // expires in 24 hours
+        //  });
+
+        res.status(200).send({ auth: true, token: token });
     } catch (error) {
         res.status(500).json({ error: error })
     }
@@ -60,8 +66,12 @@ userRouter.post('/login', async(req, res) => {
             //check password
             bcrypt.compare(password, currentUser[0].password).then(function(result) {
                 if (result) {
-                    //urus token disini
-                    res.status(201).json({ "status": "logged in!" });
+                    var token = jwt.sign({ id: user._id }, config.secret, {
+                        expiresIn: 86400 // expires in 24 hours
+                    });
+
+                    // return the information including token as JSON
+                    res.status(202).send({ auth: true, token: token });
                 } else
                     res.status(201).json({ "status": "wrong password." });
             });
@@ -75,8 +85,8 @@ userRouter.post('/login', async(req, res) => {
 })
 
 //getalluser
-userRouter.get('/all', async(req, res) => {
-    const users = await User.find({})
+userRouter.get('/all', VerifyToken, async(req, res) => {
+    const users = User.find({})
     if (users) {
         res.json(users)
     } else {
@@ -85,7 +95,7 @@ userRouter.get('/all', async(req, res) => {
 })
 
 //getuser by id
-userRouter.get('/info/:id', async(req, res) => {
+userRouter.get('/info/:id', VerifyToken, async(req, res) => {
     const users = await User.findById(req.params.id)
     if (users) {
         res.json(users)
@@ -96,12 +106,11 @@ userRouter.get('/info/:id', async(req, res) => {
 
 //put update
 
-userRouter.put('/update/:id', async(req, res) => {
+userRouter.put('/update/:id', VerifyToken, async(req, res) => {
     const {
         username,
         password,
-        role,
-        accessToken
+        role
     } = req.body
 
     let saltRound = 10
@@ -111,8 +120,7 @@ userRouter.put('/update/:id', async(req, res) => {
     if (users) {
         users.username = username
         users.password = hashedPW
-        users.role = role,
-            users.accessToken = accessToken
+        users.role = role
 
         const updateUser = await user.save()
         res.json(updateUser)
@@ -123,7 +131,7 @@ userRouter.put('/update/:id', async(req, res) => {
 
 })
 
-userRouter.delete('/del/:id', async(req, res) => {
+userRouter.delete('/del/:id', VerifyToken, async(req, res) => {
     const users = await User.findById(req.params.id)
     if (users) {
         await User.remove()
