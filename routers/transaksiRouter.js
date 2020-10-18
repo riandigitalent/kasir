@@ -1,6 +1,6 @@
 import express from 'express'
 import Transaksi from '../models/transaksiModel.js'
-import auth2 from('../middlewares/auth')
+import auth2 from '../middleware/auth.js'
 
 const transRouter = express.Router();
 

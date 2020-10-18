@@ -1,10 +1,11 @@
 import jwt from 'jsonwebtoken'
-import User from '../models/userModel'
-import config from '../config/config.js'
+import User from '../models/userModel.js'
+const config = ('../config/config.js')
 
-const verifyToken = express.Router();
+const verifyToken = express();
 
-async function verifyToken(req, res, next) {
+verifyToken(async(req, res) => {
+
     const token = req.headers['authorization'];
     if (!!token) {
         try {
@@ -19,5 +20,5 @@ async function verifyToken(req, res, next) {
     } else {
         res.status(401).json({ message: 'token gak valid' });
     };
-};
+});
 export default verifyToken

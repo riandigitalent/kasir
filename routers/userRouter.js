@@ -2,7 +2,7 @@ import User from '../models/UserModel.js';
 import express from 'express'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
-import config from '../config/config.js'
+const config = ('../config/config.js')
 import bodyParser from 'body-parser';
 
 const userRouter = express.Router();
@@ -49,45 +49,30 @@ userRouter.post('/add', async(req, res) => {
 //login
 userRouter.post('/login', async(req, res) => {
     try {
-        const {
-            username,
-            password,
-        } = req.body;
+        const data = req.body;
+        const user = await User.findOne({ username: data.username });
 
-        const currentUser = await new Promise((resolve, reject) => {
-            User.find({ "username": username }, function(err, user) {
-                if (err)
-                    reject(err)
-                resolve(user)
-            })
-        })
+        if (!!user) {
+            if (await bcrypt.compare(data.password, user.password)) {
+                const userToken = {
+                    id: user._id,
+                    name: user.name,
+                    username: user.username,
+                }
 
-        //cek apakah ada user?
-        if (currentUser[0]) {
-            //check password
-            bcrypt.compare(password, currentUser[0].password).then(function(result) {
-                if (result) {
-                    //urus token disini
-                    res.status(201).json({ "status": "logged in!" });
-                } else
-                    res.status(201).json({ "status": "wrong password." });
-            });
+                const token = jwt.sign({ userToken }, config.SECRET, { expiresIn: '86400s' });
+                res.status(200).json({
+                    message: 'Login berhasil',
+                    token,
+                })
+            } else {
+                res.send(404).json({ message: 'login gagal' })
+            }
         } else {
-            res.status(201).json({ "status": "username not found" });
+            res.send(404).json({ message: 'login gagal' })
         }
-
-    } catch (error) {
-        res.status(500).json({ error: error })
-    }
-})
-
-//getalluser
-userRouter.get('/all', async(req, res) => {
-    const users = await User.find({})
-    if (users) {
-        res.json(users)
-    } else {
-        res.status(404).json({ message: 'Users not found' })
+    } catch (err) {
+        res.status(500).json({ message: err })
     }
 })
 
